@@ -45,7 +45,7 @@ public class DocProcessor {
                         execute();
                     } else {
                         writer.close();
-                        System.out.println(docTopic + " Done");
+                        System.out.println(docTopic + " Done: vocabulary size=" + vocabulary.size());
                     }
                 } catch (InterruptedException e) {
                     System.err.println(docTopic + " Interrupted");
@@ -61,8 +61,8 @@ public class DocProcessor {
             for (String word : sentence) {
                 Integer wordIndex = vocabulary.get(word);
                 if (wordIndex == null) {
-                    vocabulary.put(word, wordCount);
-                    wordIndex = vocabulary.size();
+                    wordIndex = vocabulary.size() + 1;
+                    vocabulary.put(word, wordIndex);
                 }
                 writer.println(WriterEnum.M, wordIndex);
                 wordCount++;
