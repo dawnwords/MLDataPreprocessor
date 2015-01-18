@@ -2,7 +2,6 @@ import d2sparser.D2SParser;
 import io.OutputWriter;
 import io.WriterEnum;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -16,7 +15,6 @@ public class DocProcessor {
 
     private String docTopic;
     private BlockingQueue<String> docQueue;
-    private String outputPath;
     private HashMap<String, Integer> vocabulary;
     private OutputWriter writer;
     private D2SParser d2SParser;
@@ -24,7 +22,6 @@ public class DocProcessor {
 
     public DocProcessor(String outputPath, String docTopic, D2SParser d2SParser) {
         this.docTopic = docTopic;
-        this.outputPath = outputPath;
         this.docQueue = new LinkedBlockingQueue<String>();
         this.vocabulary = new HashMap<String, Integer>();
         this.writer = new OutputWriter(outputPath, docTopic);
@@ -44,13 +41,11 @@ public class DocProcessor {
                 try {
                     String filePath = docQueue.poll(1, TimeUnit.SECONDS);
                     if (filePath != null) {
-                        System.out.println("Process " + filePath);
-                        processDoc(outputPath + File.separator + docTopic + File.separator + filePath);
-                        System.out.println("Finish " + filePath);
+                        processDoc(filePath);
                         execute();
                     } else {
                         writer.close();
-                        System.out.println("Done");
+                        System.out.println(docTopic + " Done");
                     }
                 } catch (InterruptedException e) {
                     System.err.println(docTopic + " Interrupted");
@@ -67,9 +62,10 @@ public class DocProcessor {
                 Integer wordIndex = vocabulary.get(word);
                 if (wordIndex == null) {
                     vocabulary.put(word, wordCount);
-                    wordIndex = wordCount++;
+                    wordIndex = vocabulary.size();
                 }
                 writer.println(WriterEnum.M, wordIndex);
+                wordCount++;
             }
             writer.println(WriterEnum.D, start, wordCount - 1);
         }
