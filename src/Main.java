@@ -17,27 +17,33 @@ public class Main {
 
 
         D2SParser parser = new StanfordNLPD2SParser();
-        process("hardware", IBM_HARDWARE, MAC_HARDWARE, parser);
-        process("sport", BASEBALL, HOCKEY, parser);
-        process("science", MED, SPACE, parser);
-        process("religion", ATHEISM, CHRISTIAN, parser);
+        process("hardware", IBM_HARDWARE, MAC_HARDWARE, 0.8, parser);
+        process("sport", BASEBALL, HOCKEY, 0.8, parser);
+        process("science", MED, SPACE, 0.8, parser);
+        process("religion", ATHEISM, CHRISTIAN, 0.8, parser);
     }
 
-    static void process(String topic, String class1, String class2, D2SParser parser) {
-        DocProcessor processor = new DocProcessor("out", topic, parser);
-        processor.execute();
+    static void process(String topic, String class1, String class2, double trainTestRatio, D2SParser parser) {
         File[] filesClass1 = new File(class1).listFiles();
         File[] filesClass2 = new File(class2).listFiles();
-        int i;
-        for (i = 0; i < filesClass1.length && i < filesClass2.length; i++) {
-            processor.addFile(filesClass1[i].getAbsolutePath(), 1);
-            processor.addFile(filesClass2[i].getAbsolutePath(), 0);
+
+        int class1Size = filesClass1.length;
+        int class2Size = filesClass2.length;
+        int trainSizeClass1 = (int) (class1Size * trainTestRatio);
+        int trainSizeClass2 = (int) (class2Size * trainTestRatio);
+
+        DocProcessor processor = new DocProcessor("out", topic, parser);
+        for (int i = 0; i < trainSizeClass1; i++) {
+            processor.addTrainFile(filesClass1[i].getAbsolutePath(), 1);
         }
-        for (; i < filesClass1.length; i++) {
-            processor.addFile(filesClass1[i].getAbsolutePath(), 1);
+        for (int i = 0; i < trainSizeClass2; i++) {
+            processor.addTrainFile(filesClass2[i].getAbsolutePath(), 0);
         }
-        for (; i < filesClass2.length; i++) {
-            processor.addFile(filesClass2[i].getAbsolutePath(), 0);
+        for (int i = trainSizeClass1; i < class1Size; i++) {
+            processor.addTestFile(filesClass1[i].getAbsolutePath(), 1);
+        }
+        for (int i = trainSizeClass2; i < class2Size; i++) {
+            processor.addTestFile(filesClass2[i].getAbsolutePath(), 0);
         }
     }
 }

@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 public class DocProcessor {
 
     private String docTopic;
-    private BlockingQueue<String> docQueue;
+    private BlockingQueue<FileTrainPair> docQueue;
     private HashMap<String, Integer> vocabulary;
     private OutputWriter writer;
     private D2SParser d2SParser;
@@ -22,26 +22,27 @@ public class DocProcessor {
 
     public DocProcessor(String outputPath, String docTopic, D2SParser d2SParser) {
         this.docTopic = docTopic;
-        this.docQueue = new LinkedBlockingQueue<String>();
+        this.docQueue = new LinkedBlockingQueue<FileTrainPair>();
         this.vocabulary = new HashMap<String, Integer>();
         this.writer = new OutputWriter(outputPath, docTopic);
         this.d2SParser = d2SParser;
         this.wordCount = 1;
+
+        execute();
     }
 
-    public void addFile(String filePath, int label) {
-        writer.println(WriterEnum.L, label);
-        docQueue.add(filePath);
-    }
-
-    public void execute() {
+    private void execute() {
         new Thread() {
             @Override
             public void run() {
                 try {
-                    String filePath = docQueue.poll(1, TimeUnit.SECONDS);
-                    if (filePath != null) {
-                        processDoc(filePath);
+                    FileTrainPair file = docQueue.poll(1, TimeUnit.SECONDS);
+                    if (file != null) {
+                        if (file.isTrain) {
+                            processTrainDoc(file.file);
+                        } else {
+                            processTestFile(file.file);
+                        }
                         execute();
                     } else {
                         writer.close();
@@ -54,7 +55,17 @@ public class DocProcessor {
         }.start();
     }
 
-    private void processDoc(String docPath) {
+    public void addTrainFile(String filePath, int label) {
+        writer.println(WriterEnum.L, label);
+        docQueue.add(new FileTrainPair(filePath, true));
+    }
+
+    public void addTestFile(String filePath, int label) {
+        writer.println(WriterEnum.Y, label);
+        docQueue.add(new FileTrainPair(filePath, false));
+    }
+
+    private void processTrainDoc(String docPath) {
         List<List<String>> sentences = d2SParser.toSentence(docPath);
         for (List<String> sentence : sentences) {
             int start = wordCount;
@@ -70,6 +81,28 @@ public class DocProcessor {
             writer.println(WriterEnum.D, start, wordCount - 1);
         }
         writer.println(WriterEnum.D, 0, 0);
+    }
+
+    private void processTestFile(String docPath) {
+        List<List<String>> sentences = d2SParser.toSentence(docPath);
+        for (List<String> sentence : sentences) {
+            for (String word : sentence) {
+                Integer wordIndex = vocabulary.get(word);
+                if (wordIndex != null) {
+                    writer.println(WriterEnum.X, wordIndex);
+                }
+            }
+        }
+    }
+
+    private class FileTrainPair {
+        String file;
+        boolean isTrain;
+
+        public FileTrainPair(String file, boolean isTrain) {
+            this.file = file;
+            this.isTrain = isTrain;
+        }
     }
 
 }
