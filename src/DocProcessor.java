@@ -85,14 +85,20 @@ public class DocProcessor {
 
     private void processTestFile(String docPath) {
         List<List<String>> sentences = d2SParser.toSentence(docPath);
+        HashMap<Integer, Integer> wordCount = new HashMap<Integer, Integer>();
         for (List<String> sentence : sentences) {
             for (String word : sentence) {
                 Integer wordIndex = vocabulary.get(word);
                 if (wordIndex != null) {
-                    writer.println(WriterEnum.X, wordIndex);
+                    Integer count = wordCount.get(wordIndex);
+                    wordCount.put(wordIndex, count == null ? 1 : count + 1);
                 }
             }
         }
+        for (Integer wordIndex : wordCount.keySet()) {
+            writer.println(WriterEnum.X, wordIndex, wordCount.get(wordIndex));
+        }
+        writer.println(WriterEnum.X, 0, 0);
     }
 
     private class FileTrainPair {

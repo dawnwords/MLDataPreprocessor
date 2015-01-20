@@ -23,27 +23,27 @@ public class Main {
         process("religion", ATHEISM, CHRISTIAN, 0.8, parser);
     }
 
-    static void process(String topic, String class1, String class2, double trainTestRatio, D2SParser parser) {
+    static void process(String topic, String class1, String class0, double trainTestRatio, D2SParser parser) {
         File[] filesClass1 = new File(class1).listFiles();
-        File[] filesClass2 = new File(class2).listFiles();
+        File[] filesClass0 = new File(class0).listFiles();
 
         int class1Size = filesClass1.length;
-        int class2Size = filesClass2.length;
+        int class0Size = filesClass0.length;
         int trainSizeClass1 = (int) (class1Size * trainTestRatio);
-        int trainSizeClass2 = (int) (class2Size * trainTestRatio);
+        int trainSizeClass0 = (int) (class0Size * trainTestRatio);
 
         DocProcessor processor = new DocProcessor("out", topic, parser);
         for (int i = 0; i < trainSizeClass1; i++) {
             processor.addTrainFile(filesClass1[i].getAbsolutePath(), 1);
         }
-        for (int i = 0; i < trainSizeClass2; i++) {
-            processor.addTrainFile(filesClass2[i].getAbsolutePath(), 0);
+        for (int i = 0; i < trainSizeClass0; i++) {
+            processor.addTrainFile(filesClass0[i].getAbsolutePath(), 0);
         }
         for (int i = trainSizeClass1; i < class1Size; i++) {
             processor.addTestFile(filesClass1[i].getAbsolutePath(), 1);
         }
-        for (int i = trainSizeClass2; i < class2Size; i++) {
-            processor.addTestFile(filesClass2[i].getAbsolutePath(), 0);
+        for (int i = trainSizeClass0; i < class0Size; i++) {
+            processor.addTestFile(filesClass0[i].getAbsolutePath(), 0);
         }
     }
 }
